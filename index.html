@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolleberegner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fdf6ee;
+      font-family: 'Georgia', serif;
+      color: #4a2c0a;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem 1rem;
+      gap: 0.6rem;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      letter-spacing: 0.04em;
+      font-weight: normal;
+    }
+
+    h1 img {
+      height: 0.9em;
+      width: auto;
+      vertical-align: -0.1em;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: clamp(1rem, 3vw, 1.3rem);
+    }
+
+    label {
+      opacity: 0.75;
+    }
+
+    input[type=number] {
+      width: 5ch;
+      font-size: inherit;
+      font-family: inherit;
+      color: inherit;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #c47c2b;
+      outline: none;
+      text-align: center;
+      padding: 0.1em 0.2em;
+    }
+
+    /* Hide spinners */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .result {
+      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+      opacity: 0.6;
+      min-height: 1.4em;
+    }
+
+    #grid {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 1rem 1rem;
+    }
+
+    #grid img {
+      object-fit: contain;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>B<img id="title-bun" alt="o">lleberegner</h1>
+    <div class="input-row">
+      <label for="people">Antall personer:</label>
+      <input type="number" id="people" min="0" autocomplete="off">
+    </div>
+    <p class="result" id="result"></p>
+  </header>
+  <div id="grid"></div>
+
+  <script>
+    const IMAGES = ['bun1.png', 'bun2.png', 'bun3.png'];
+
+    document.getElementById('title-bun').src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+
+    const input = document.getElementById('people');
+    const result = document.getElementById('result');
+    const grid = document.getElementById('grid');
+
+    // Always keep input focused
+    document.addEventListener('focusout', () => input.focus(), true);
+    input.focus();
+
+    // Clear on Escape or 'c'
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        input.value = '';
+        update();
+      }
+    });
+
+    input.addEventListener('input', update);
+    window.addEventListener('resize', update);
+
+    const GAP = 12;
+
+    function calcSize(n) {
+      const w = grid.clientWidth;
+      const h = grid.clientHeight;
+      if (n === 0 || w === 0 || h === 0) return 0;
+      const ratio = w / h;
+      const cols = Math.ceil(Math.sqrt(n * ratio));
+      const rows = Math.ceil(n / cols);
+      return Math.floor(Math.min(
+        (w - GAP * (cols - 1)) / cols,
+        (h - GAP * (rows - 1)) / rows
+      ) * 0.9);
+    }
+
+    function update() {
+      const people = Math.max(0, parseInt(input.value) || 0);
+      const boller = people > 0 ? Math.ceil(40 / 60 * people) : 0;
+
+      result.textContent = boller > 0 ? `= ${boller} ${boller === 1 ? 'bolle' : 'boller'}` : '';
+
+      while (grid.children.length > boller) grid.lastChild.remove();
+      while (grid.children.length < boller) {
+        const img = document.createElement('img');
+        img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+        img.alt = 'bolle';
+        grid.appendChild(img);
+      }
+
+      const size = calcSize(boller);
+      for (const img of grid.children) {
+        img.style.width = size + 'px';
+        img.style.height = size + 'px';
+      }
+    }
+
+    update();
+  </script>
+</body>
+</html>
