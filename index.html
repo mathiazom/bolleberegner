@@ -298,6 +298,9 @@
     document.addEventListener('focusout', () => input.focus(), true);
     input.focus();
 
+    const folk = new URLSearchParams(window.location.search).get('folk');
+    if (folk) input.value = folk;
+
     // Clear on Escape or 'c'
     input.addEventListener('keydown', e => {
       if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
@@ -328,6 +331,12 @@
 
     function update() {
       const raw = parseInt(input.value) || 0;
+
+      if (raw > 0) {
+        history.replaceState(null, '', '?folk=' + raw);
+      } else {
+        history.replaceState(null, '', window.location.pathname);
+      }
       const boller = raw > 0 ? Math.ceil(40 / 60 * raw) : 0;
 
       const isInfinity = raw > 10000;
