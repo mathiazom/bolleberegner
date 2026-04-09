@@ -381,6 +381,16 @@
     }
 
     update();
+
+    // Keep layout within the visible viewport (handles mobile keyboard)
+    if (window.visualViewport) {
+      const fitViewport = () => {
+        document.body.style.height = window.visualViewport.height + 'px';
+        update();
+      };
+      window.visualViewport.addEventListener('resize', fitViewport);
+      fitViewport();
+    }
   </script>
 </body>
 </html>
