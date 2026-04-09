@@ -82,7 +82,7 @@
       flex-wrap: wrap;
       align-content: center;
       justify-content: center;
-      gap: 12px;
+      gap: 0;
       padding: 0 1rem 1rem;
     }
 
@@ -154,6 +154,7 @@
     #infinity-mode {
       display: none;
       flex: 1;
+      min-height: 0;
       align-items: center;
       justify-content: center;
     }
@@ -220,37 +221,51 @@
 
     let infAnimId = null;
     let infAngle = 0;
+    let infA = 0;
+    let infBunSize = 0;
 
-    function startInfinity() {
-      const N = 24;
-      infinityContainer.innerHTML = '';
-
+    function resizeInfinity() {
+      infinityContainer.style.width = '';
+      infinityContainer.style.height = '';
       const w = infinityMode.clientWidth;
       const h = infinityMode.clientHeight;
-      const bunSize = Math.min(w, h) * 0.1;
-      const a = Math.min(w * 0.38, h * 0.7);
-
+      if (w === 0 || h === 0) return;
+      infBunSize = Math.min(w, h) * 0.1;
+      infA = Math.min(w * 0.38, h * 0.7);
       infinityContainer.style.width = w + 'px';
       infinityContainer.style.height = h + 'px';
+      infinityContainer.querySelectorAll('.inf-bun').forEach(b => {
+        b.style.width = infBunSize + 'px';
+        b.style.height = infBunSize + 'px';
+      });
+    }
 
-      for (let i = 0; i < N; i++) {
+    function startInfinity() {
+      // Already running — just sync dimensions, keep animation going
+      if (infAnimId) {
+        resizeInfinity();
+        return;
+      }
+
+      infinityContainer.innerHTML = '';
+      resizeInfinity();
+
+      for (let i = 0; i < 24; i++) {
         const img = document.createElement('img');
         img.className = 'inf-bun';
         img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
         img.alt = 'bolle';
-        img.style.width = bunSize + 'px';
-        img.style.height = bunSize + 'px';
+        img.style.width = infBunSize + 'px';
+        img.style.height = infBunSize + 'px';
         infinityContainer.appendChild(img);
       }
 
       function frame() {
         infAngle += 0.012;
         const buns = infinityContainer.querySelectorAll('.inf-bun');
-        const cw = infinityContainer.clientWidth;
-        const ch = infinityContainer.clientHeight;
         buns.forEach((bun, i) => {
           const t = infAngle + (i / buns.length) * 2 * Math.PI;
-          const { x, y } = lemniscate(t, a);
+          const { x, y } = lemniscate(t, infA);
           const s = parseFloat(bun.style.width);
           bun.style.left = `calc(50% + ${x}px - ${s / 2}px)`;
           bun.style.top  = `calc(50% + ${y}px - ${s / 2}px)`;
@@ -258,7 +273,6 @@
         infAnimId = requestAnimationFrame(frame);
       }
 
-      if (infAnimId) cancelAnimationFrame(infAnimId);
       infAnimId = requestAnimationFrame(frame);
     }
 
@@ -315,8 +329,8 @@
     input.addEventListener('input', update);
     window.addEventListener('resize', update);
 
-    const GAP = 12;
     const MAX_SIZE = 300;
+    const GAP_RATIO = 0.15;
 
     function calcSize(n) {
       const w = grid.clientWidth;
@@ -325,9 +339,10 @@
       const ratio = w / h;
       const cols = Math.ceil(Math.sqrt(n * ratio));
       const rows = Math.ceil(n / cols);
+      // gap = size * GAP_RATIO → solve for size analytically
       return Math.min(MAX_SIZE, Math.floor(Math.min(
-        (w - GAP * (cols - 1)) / cols,
-        (h - GAP * (rows - 1)) / rows
+        w / (cols + GAP_RATIO * (cols - 1)),
+        h / (rows + GAP_RATIO * (rows - 1))
       ) * 0.9));
     }
 
@@ -374,6 +389,7 @@
       }
 
       const size = calcSize(boller);
+      grid.style.gap = Math.max(2, Math.round(size * GAP_RATIO)) + 'px';
       for (const img of grid.children) {
         img.style.width = size + 'px';
         img.style.height = size + 'px';
@@ -386,7 +402,8 @@
     if (window.visualViewport) {
       const fitViewport = () => {
         document.body.style.height = window.visualViewport.height + 'px';
-        update();
+        // Defer dimension reads to next frame so layout has settled
+        requestAnimationFrame(update);
       };
       window.visualViewport.addEventListener('resize', fitViewport);
       fitViewport();
