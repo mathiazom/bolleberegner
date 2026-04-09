@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bolleberegner</title>
+  <link rel="icon" id="favicon" type="image/png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -199,6 +200,7 @@
     const IMAGES = ['bun1.png', 'bun2.png', 'bun3.png', 'bun4.png'];
 
     document.getElementById('title-bun').src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+    document.getElementById('favicon').href = IMAGES[Math.floor(Math.random() * IMAGES.length)];
 
     const input = document.getElementById('people');
     const result = document.getElementById('result');
