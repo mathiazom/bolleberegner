@@ -103,7 +103,7 @@
   <div id="grid"></div>
 
   <script>
-    const IMAGES = ['bun1.png', 'bun2.png', 'bun3.png'];
+    const IMAGES = ['bun1.png', 'bun2.png', 'bun3.png', 'bun4.png'];
 
     document.getElementById('title-bun').src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
 
@@ -128,6 +128,7 @@
     window.addEventListener('resize', update);
 
     const GAP = 12;
+    const MAX_SIZE = 300;
 
     function calcSize(n) {
       const w = grid.clientWidth;
@@ -136,10 +137,10 @@
       const ratio = w / h;
       const cols = Math.ceil(Math.sqrt(n * ratio));
       const rows = Math.ceil(n / cols);
-      return Math.floor(Math.min(
+      return Math.min(MAX_SIZE, Math.floor(Math.min(
         (w - GAP * (cols - 1)) / cols,
         (h - GAP * (rows - 1)) / rows
-      ) * 0.9);
+      ) * 0.9));
     }
 
     function update() {
