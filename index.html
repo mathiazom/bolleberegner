@@ -89,6 +89,87 @@
       object-fit: contain;
       display: block;
     }
+
+    #too-many {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #too-many.visible {
+      display: flex;
+    }
+
+    #ring-container {
+      position: relative;
+    }
+
+    #ring-buns {
+      position: absolute;
+      inset: 0;
+      animation: spin 14s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .ring-bun {
+      animation: self-spin 3s linear infinite;
+    }
+
+    @keyframes self-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2em;
+    }
+
+    #ring-count {
+      font-size: clamp(3rem, 12vw, 7rem);
+      font-weight: bold;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    #ring-label {
+      font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+      opacity: 0.6;
+    }
+
+    .ring-bun {
+      position: absolute;
+      object-fit: contain;
+    }
+
+    #infinity-mode {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #infinity-mode.visible {
+      display: flex;
+    }
+
+    #infinity-container {
+      position: relative;
+    }
+
+    .inf-bun {
+      position: absolute;
+      object-fit: contain;
+      animation: self-spin 2s linear infinite;
+    }
   </style>
 </head>
 <body>
@@ -101,6 +182,18 @@
     <p class="result" id="result"></p>
   </header>
   <div id="grid"></div>
+  <div id="infinity-mode">
+    <div id="infinity-container"></div>
+  </div>
+  <div id="too-many">
+    <div id="ring-container">
+      <div id="ring-buns"></div>
+      <div id="ring-center">
+        <span id="ring-count"></span>
+        <span id="ring-label"></span>
+      </div>
+    </div>
+  </div>
 
   <script>
     const IMAGES = ['bun1.png', 'bun2.png', 'bun3.png', 'bun4.png'];
@@ -110,6 +203,96 @@
     const input = document.getElementById('people');
     const result = document.getElementById('result');
     const grid = document.getElementById('grid');
+    const tooMany = document.getElementById('too-many');
+    const infinityMode = document.getElementById('infinity-mode');
+    const infinityContainer = document.getElementById('infinity-container');
+    const ringContainer = document.getElementById('ring-container');
+    const ringCount = document.getElementById('ring-count');
+    const ringLabel = document.getElementById('ring-label');
+
+    // Lemniscate of Bernoulli: x = a·cos(t)/(1+sin²(t)), y = a·sin(t)·cos(t)/(1+sin²(t))
+    function lemniscate(t, a) {
+      const d = 1 + Math.sin(t) ** 2;
+      return { x: a * Math.cos(t) / d, y: a * Math.sin(t) * Math.cos(t) / d };
+    }
+
+    let infAnimId = null;
+    let infAngle = 0;
+
+    function startInfinity() {
+      const N = 24;
+      infinityContainer.innerHTML = '';
+
+      const w = infinityMode.clientWidth;
+      const h = infinityMode.clientHeight;
+      const bunSize = Math.min(w, h) * 0.1;
+      const a = Math.min(w * 0.38, h * 0.7);
+
+      infinityContainer.style.width = w + 'px';
+      infinityContainer.style.height = h + 'px';
+
+      for (let i = 0; i < N; i++) {
+        const img = document.createElement('img');
+        img.className = 'inf-bun';
+        img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+        img.alt = 'bolle';
+        img.style.width = bunSize + 'px';
+        img.style.height = bunSize + 'px';
+        infinityContainer.appendChild(img);
+      }
+
+      function frame() {
+        infAngle += 0.012;
+        const buns = infinityContainer.querySelectorAll('.inf-bun');
+        const cw = infinityContainer.clientWidth;
+        const ch = infinityContainer.clientHeight;
+        buns.forEach((bun, i) => {
+          const t = infAngle + (i / buns.length) * 2 * Math.PI;
+          const { x, y } = lemniscate(t, a);
+          const s = parseFloat(bun.style.width);
+          bun.style.left = `calc(50% + ${x}px - ${s / 2}px)`;
+          bun.style.top  = `calc(50% + ${y}px - ${s / 2}px)`;
+        });
+        infAnimId = requestAnimationFrame(frame);
+      }
+
+      if (infAnimId) cancelAnimationFrame(infAnimId);
+      infAnimId = requestAnimationFrame(frame);
+    }
+
+    function stopInfinity() {
+      if (infAnimId) { cancelAnimationFrame(infAnimId); infAnimId = null; }
+      infinityContainer.innerHTML = '';
+    }
+
+    function buildRing(boller) {
+      ringCount.textContent = boller;
+      ringLabel.textContent = boller === 1 ? 'bolle' : 'boller';
+
+      const ringBuns = document.getElementById('ring-buns');
+      ringBuns.innerHTML = '';
+
+      const avail = Math.min(tooMany.clientWidth, tooMany.clientHeight) * 0.85;
+      const bunSize = avail * 0.18;
+      const radius = (avail - bunSize) / 2;
+      const N = 10;
+
+      ringContainer.style.width = avail + 'px';
+      ringContainer.style.height = avail + 'px';
+
+      for (let i = 0; i < N; i++) {
+        const angle = (i / N) * 2 * Math.PI - Math.PI / 2;
+        const img = document.createElement('img');
+        img.className = 'ring-bun';
+        img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+        img.alt = 'bolle';
+        img.style.width = bunSize + 'px';
+        img.style.height = bunSize + 'px';
+        img.style.left = `calc(50% + ${Math.cos(angle) * radius}px - ${bunSize / 2}px)`;
+        img.style.top = `calc(50% + ${Math.sin(angle) * radius}px - ${bunSize / 2}px)`;
+        ringBuns.appendChild(img);
+      }
+    }
 
     // Always keep input focused
     document.addEventListener('focusout', () => input.focus(), true);
@@ -144,8 +327,30 @@
     }
 
     function update() {
-      const people = Math.max(0, parseInt(input.value) || 0);
-      const boller = people > 0 ? Math.ceil(40 / 60 * people) : 0;
+      const raw = parseInt(input.value) || 0;
+      const boller = raw > 0 ? Math.ceil(40 / 60 * raw) : 0;
+
+      const isInfinity = raw > 10000;
+      const isRing = !isInfinity && raw > 1000;
+      const isGrid = !isInfinity && !isRing;
+
+      grid.style.display = isGrid ? '' : 'none';
+      tooMany.classList.toggle('visible', isRing);
+      infinityMode.classList.toggle('visible', isInfinity);
+
+      if (isInfinity) {
+        result.textContent = '';
+        startInfinity();
+        return;
+      }
+
+      stopInfinity();
+
+      if (isRing) {
+        result.textContent = '';
+        buildRing(boller);
+        return;
+      }
 
       result.textContent = boller > 0 ? `= ${boller} ${boller === 1 ? 'bolle' : 'boller'}` : '';
 
